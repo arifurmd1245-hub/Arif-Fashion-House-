@@ -1,0 +1,1 @@
+window.AFH_CONFIG={API_URL:""};
