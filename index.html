@@ -1,15 +1,299 @@
 <!doctype html>
-<html lang="bn"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Arif Fashion House</title><link rel="stylesheet" href="style.css"><script src="config.js"></script>
-</head><body>
-<header class="topbar"><a class="brand" href="#"><img src="logo.png" onerror="this.style.display='none'"><span><b id="brandName">Arif Fashion House</b><small>Men's & Women's Fashion</small></span></a><a class="admin-link" href="admin.html">Admin</a></header>
-<section class="hero"><img src="cover.png" onerror="this.style.display='none'"><div><span>ARIF FASHION HOUSE</span><h1 id="heroTitle">Style • Quality • Reliable Service</h1><p id="heroSubtitle">Trendy fashion with home delivery.</p><a href="#productsSection" class="hero-btn">Shop Now</a></div></section>
-<main><div class="trust"><div>🚚<b> Home Delivery</b><small>Reliable service</small></div><div>💳<b> Easy Payment</b><small>COD / Advance</small></div><div>✅<b> Easy Order</b><small>Order online</small></div></div>
-<section id="productsSection"><div class="section-title"><div><small>OUR COLLECTION</small><h2>Shop Products</h2></div><div class="chips"><button class="chip active" data-cat="all">All</button><button class="chip" data-cat="men">Men</button><button class="chip" data-cat="women">Women</button></div></div><div id="products" class="grid"></div></section></main>
-<footer><b id="footerBrand">Arif Fashion House</b><span><a id="facebookLink" href="#">Facebook</a> · <a id="youtubeLink" href="#">YouTube</a></span></footer>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arif Fashion House</title>
+<link rel="stylesheet" href="style.css">
+<script src="config.js"></script>
+</head>
 
-<div id="productModal" class="modal hidden"><div class="modal-card"><button class="close" onclick="closeProduct()">×</button><div class="detail"><div><img id="detailImage" class="detail-img"><div id="thumbs" class="thumbs"></div></div><div><small id="detailCategory"></small><h2 id="detailName"></h2><div class="price-line"><b id="detailPrice"></b><del id="detailOld"></del><i id="detailDiscount"></i></div><p id="detailDescription"></p><div id="colorWrap"><b>Color</b><div id="colors" class="choices"></div></div><div id="sizeWrap"><b>Size</b><div id="sizes" class="choices"></div></div><div class="qty"><button onclick="changeQty(-1)">−</button><b id="qty">1</b><button onclick="changeQty(1)">+</button></div><div class="summary"><span>Product Total</span><b id="productTotal">৳0</b></div><button class="primary full" onclick="goCheckout()">Order Now</button></div></div></div></div>
+<body>
 
-<div id="checkoutModal" class="modal hidden"><div class="modal-card"><button class="close" onclick="closeCheckout()">×</button><h2>Confirm Your Order</h2><div class="checkout-product"><img id="checkoutImage"><div><b id="checkoutName"></b><p id="variantSummary"></p></div></div><div class="box"><h3>👤 Customer Information</h3><input id="customerName" placeholder="Customer Name *"><input id="customerPhone" placeholder="Mobile Number *" inputmode="tel"><textarea id="customerAddress" placeholder="Full Delivery Address *"></textarea></div><div class="box"><div class="summary"><span>Delivery Charge</span><b id="shipping">৳0</b></div></div><div class="box"><h3>💳 Payment</h3><label><input type="radio" name="payment" value="COD" checked> Cash on Delivery</label><label><input type="radio" name="payment" value="Advance"> Advance Payment</label><div id="paymentNumbers"></div><input id="transactionId" class="hidden" placeholder="Transaction ID"></div><div class="box warning"><h3>⚠️ Order Confirmation</h3><p id="warning"></p><label><input type="checkbox" id="confirmCheck" onchange="toggleConfirm()"> আমি অর্ডারের তথ্য সঠিকভাবে যাচাই করেছি এবং অর্ডারটি গ্রহণ করব।</label></div><div class="summary total"><span>Total</span><b id="total">৳0</b></div><button id="confirmOrder" class="primary full" disabled onclick="submitOrder()">✅ Confirm Order</button><p id="orderMsg"></p></div></div>
-<script src="script.js"></script></body></html>
+<header class="topbar">
+  <a class="brand" href="#">
+    <img src="logo.png" onerror="this.style.display='none'">
+    <span>
+      <b id="brandName">Arif Fashion House</b>
+      <small>Men's & Women's Fashion</small>
+    </span>
+  </a>
+  <a class="admin-link" href="admin.html">Admin</a>
+</header>
+
+<section class="hero">
+  <img src="cover.png" onerror="this.style.display='none'">
+  <div>
+    <span>ARIF FASHION HOUSE</span>
+    <h1 id="heroTitle">Style • Quality • Reliable Service</h1>
+    <p id="heroSubtitle">Trendy fashion with home delivery.</p>
+    <a href="#productsSection" class="hero-btn">Shop Now</a>
+  </div>
+</section>
+
+<main>
+
+<div class="trust">
+  <div>🚚<b> Home Delivery</b><small>Reliable service</small></div>
+  <div>💳<b> Easy Payment</b><small>COD / Advance</small></div>
+  <div>✅<b> Easy Order</b><small>Order online</small></div>
+</div>
+
+<section id="productsSection">
+  <div class="section-title">
+    <div>
+      <small>OUR COLLECTION</small>
+      <h2>Shop Products</h2>
+    </div>
+
+    <div class="chips">
+      <button class="chip active" data-cat="all">All</button>
+      <button class="chip" data-cat="men">Men</button>
+      <button class="chip" data-cat="women">Women</button>
+    </div>
+  </div>
+
+  <div id="products" class="grid"></div>
+</section>
+
+</main>
+
+<footer>
+  <b id="footerBrand">Arif Fashion House</b>
+  <span>
+    <a id="facebookLink" href="#">Facebook</a> ·
+    <a id="youtubeLink" href="#">YouTube</a>
+  </span>
+</footer>
+
+
+<!-- PRODUCT MODAL -->
+
+<div id="productModal" class="modal hidden">
+
+  <div class="modal-card">
+
+    <button class="close" onclick="closeProduct()">×</button>
+
+    <div class="detail">
+
+      <div>
+        <img id="detailImage" class="detail-img">
+        <div id="thumbs" class="thumbs"></div>
+      </div>
+
+      <div>
+
+        <small id="detailCategory"></small>
+
+        <h2 id="detailName"></h2>
+
+        <div class="price-line">
+          <b id="detailPrice"></b>
+          <del id="detailOld"></del>
+          <i id="detailDiscount"></i>
+        </div>
+
+        <p id="detailDescription"></p>
+
+        <div id="colorWrap">
+          <b>Color</b>
+          <div id="colors" class="choices"></div>
+        </div>
+
+        <div id="sizeWrap">
+          <b>Size</b>
+          <div id="sizes" class="choices"></div>
+        </div>
+
+        <div class="qty">
+          <button onclick="changeQty(-1)">−</button>
+          <b id="qty">1</b>
+          <button onclick="changeQty(1)">+</button>
+        </div>
+
+        <div class="summary">
+          <span>Product Total</span>
+          <b id="productTotal">৳0</b>
+        </div>
+
+        <button class="primary full" onclick="goCheckout()">
+          Order Now
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- CHECKOUT MODAL -->
+
+<div id="checkoutModal" class="modal hidden">
+
+  <div class="modal-card">
+
+    <button class="close" onclick="closeCheckout()">×</button>
+
+    <h2>Confirm Your Order</h2>
+
+    <div class="checkout-product">
+      <img id="checkoutImage">
+
+      <div>
+        <b id="checkoutName"></b>
+        <p id="variantSummary"></p>
+      </div>
+    </div>
+
+
+    <!-- CUSTOMER INFORMATION -->
+
+    <div class="box">
+
+      <h3>👤 Customer Information</h3>
+
+      <input
+        id="customerName"
+        placeholder="Customer Name *"
+      >
+
+      <input
+        id="customerPhone"
+        placeholder="Mobile Number *"
+        inputmode="tel"
+      >
+
+      <textarea
+        id="customerAddress"
+        placeholder="Full Delivery Address *"
+      ></textarea>
+
+    </div>
+
+
+    <!-- DELIVERY AREA -->
+
+    <div class="box">
+
+      <h3>🚚 Delivery Area</h3>
+
+      <select id="deliveryArea" onchange="updateTotal()">
+
+        <option value="dhaka">
+          Dhaka City
+        </option>
+
+        <option value="outside">
+          Outside Dhaka
+        </option>
+
+      </select>
+
+    </div>
+
+
+    <!-- DELIVERY CHARGE -->
+
+    <div class="box">
+
+      <div class="summary">
+        <span>Delivery Charge</span>
+        <b id="shipping">৳0</b>
+      </div>
+
+    </div>
+
+
+    <!-- PAYMENT -->
+
+    <div class="box">
+
+      <h3>💳 Payment</h3>
+
+      <label>
+        <input
+          type="radio"
+          name="payment"
+          value="COD"
+          checked
+        >
+        Cash on Delivery
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          name="payment"
+          value="Advance"
+        >
+        Advance Payment
+      </label>
+
+      <div id="paymentNumbers"></div>
+
+      <input
+        id="transactionId"
+        class="hidden"
+        placeholder="Transaction ID"
+      >
+
+    </div>
+
+
+    <!-- WARNING -->
+
+    <div class="box warning">
+
+      <h3>⚠️ Order Confirmation</h3>
+
+      <p id="warning"></p>
+
+      <label>
+
+        <input
+          type="checkbox"
+          id="confirmCheck"
+          onchange="toggleConfirm()"
+        >
+
+        আমি অর্ডারের তথ্য সঠিকভাবে যাচাই করেছি এবং অর্ডারটি গ্রহণ করব।
+
+      </label>
+
+    </div>
+
+
+    <!-- TOTAL -->
+
+    <div class="summary total">
+
+      <span>Total</span>
+      <b id="total">৳0</b>
+
+    </div>
+
+
+    <button
+      id="confirmOrder"
+      class="primary full"
+      disabled
+      onclick="submitOrder()"
+    >
+      ✅ Confirm Order
+    </button>
+
+    <p id="orderMsg"></p>
+
+  </div>
+
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+          </html>
