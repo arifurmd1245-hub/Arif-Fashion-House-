@@ -1,16 +1,385 @@
-const API=(window.AFH_CONFIG||{}).API_URL||"";let T=sessionStorage.getItem("afh_token")||"",D={},O=[];
-async function post(x){try{return await (await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(x)})).json()}catch(e){return null}}
-async function get(a){try{return await (await fetch(API+"?action="+a+"&token="+T)).json()}catch(e){return null}}
-async function login(){let r=await post({action:"login",password:document.getElementById("password").value});if(r?.ok){T=r.token;sessionStorage.setItem("afh_token",T);show();load()}else document.getElementById("msg").textContent="Wrong password or API URL missing."}
-function show(){document.getElementById("login").classList.add("hidden");document.getElementById("panel").classList.remove("hidden")}
-async function load(){let s=await get("store");if(s?.ok){D=s.data;fill();list()}let o=await get("orders");if(o?.ok){O=o.orders||[];orders()}}
-function fill(){let s=D.settings||{};set("brand",s.brand);set("hero",s.hero);set("heroSub",s.heroSubtitle);set("shipping",s.shipping);set("facebook",s.facebook);set("youtube",s.youtube);set("bkash",s.bkashNumber);set("nagad",s.nagadNumber);set("rocket",s.rocketNumber);set("warning",s.warning);document.getElementById("cod").checked=s.cod!==false;document.getElementById("advance").checked=s.advance!==false}
-async function saveSettings(){let s={brand:v("brand"),hero:v("hero"),heroSubtitle:v("heroSub"),shipping:+v("shipping")||0,facebook:v("facebook"),youtube:v("youtube"),bkashNumber:v("bkash"),nagadNumber:v("nagad"),rocketNumber:v("rocket"),warning:v("warning"),cod:document.getElementById("cod").checked,advance:document.getElementById("advance").checked};let r=await post({action:"saveSettings",token:T,settings:s});alert(r?.ok?"Saved":"Failed");load()}
-async function saveProduct(){let p={id:v("pid")||"p-"+Date.now(),name:v("name"),category:v("cat"),image:v("image"),images:v("images").split(",").map(x=>x.trim()).filter(Boolean),price:+v("price")||0,oldPrice:+v("oldPrice")||0,colors:v("colors").split(",").map(x=>x.trim()).filter(Boolean),sizes:v("sizes").split(",").map(x=>x.trim()).filter(Boolean),description:v("desc")};let r=await post({action:"saveProduct",token:T,product:p});alert(r?.ok?"Product saved":"Failed");load()}
-function list(){$("plist").innerHTML=(D.products||[]).map(p=>`<div class="card"><img src="${p.image||""}"><div class="info"><h3>${p.name}</h3><b>৳${p.price}</b><p>Color: ${(p.colors||[]).join(", ")||"N/A"}<br>Size: ${(p.sizes||[]).join(", ")||"N/A"}</p><button class="primary full" onclick="edit('${p.id}')">Edit</button><button class="full" onclick="del('${p.id}')">Delete</button></div></div>`).join("")}
-function edit(id){let p=D.products.find(x=>x.id==id);if(!p)return;set("pid",p.id);set("name",p.name);set("cat",p.category);set("image",p.image);set("images",(p.images||[]).join(","));set("price",p.price);set("oldPrice",p.oldPrice);set("colors",(p.colors||[]).join(","));set("sizes",(p.sizes||[]).join(","));set("desc",p.description);scrollTo(0,0)}
-async function del(id){if(confirm("Delete product?")){await post({action:"deleteProduct",token:T,id});load()}}
-function orders(){$("orders").innerHTML=O.map(o=>`<div class="box"><b>${o.id}</b><p>${o.name} | ${o.phone}<br>${o.address}</p><b>${o.productName}</b><p>Color: ${o.color||"N/A"} | Size: ${o.size||"N/A"} | Qty: ${o.qty}<br>Total: ৳${o.total}<br>Payment: ${o.payment}</p><select onchange="status('${o.id}',this.value)">${["Pending","Confirmed","Processing","Shipped","Delivered","Cancelled","Returned"].map(s=>`<option ${s==o.status?"selected":""}>${s}</option>`).join("")}</select><button class="primary full" onclick="printOrder('${o.id}')">🖨️ Print Delivery Form</button></div>`).join("")||"<p>No orders.</p>"}
-async function status(id,s){await post({action:"updateOrder",token:T,id,status:s});load()}
-function printOrder(id){let o=O.find(x=>x.id==id);let w=open("","_blank");w.document.write(`<h1>Arif Fashion House</h1><h3>Customer Delivery Form</h3><hr>Order: ${o.id}<br>Customer: ${o.name}<br>Mobile: ${o.phone}<br>Address: ${o.address}<hr>Product: ${o.productName}<br>Color: ${o.color||"N/A"}<br>Size: ${o.size||"N/A"}<br>Qty: ${o.qty}<br>Product Total: ৳${o.productTotal}<br>Delivery: ৳${o.shipping}<br><b>Total: ৳${o.total}</b><script>print()<\/script>`);w.document.close()}
-function $(x){return document.getElementById(x)}function set(x,v){$(x).value=v??""}function v(x){return $(x).value.trim()}document.addEventListener("DOMContentLoaded",()=>{if(T&&API){show();load()}});
+const API=(window.AFH_CONFIG||{}).API_URL||"";
+let T=sessionStorage.getItem("afh_token")||"",D={},O=[];
+
+async function post(x){
+  try{
+    return await (await fetch(API,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain"},
+      body:JSON.stringify(x)
+    })).json()
+  }catch(e){
+    return null
+  }
+}
+
+async function get(a){
+  try{
+    return await (await fetch(API+"?action="+a+"&token="+T)).json()
+  }catch(e){
+    return null
+  }
+}
+
+async function login(){
+  let r=await post({
+    action:"login",
+    password:document.getElementById("password").value
+  });
+
+  if(r?.ok){
+    T=r.token;
+    sessionStorage.setItem("afh_token",T);
+    show();
+    load()
+  }else{
+    document.getElementById("msg").textContent="Wrong password or API URL missing."
+  }
+}
+
+function show(){
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("panel").classList.remove("hidden")
+}
+
+async function load(){
+  let s=await get("store");
+
+  if(s?.ok){
+    D=s.data;
+    fill();
+    list()
+  }
+
+  let o=await get("orders");
+
+  if(o?.ok){
+    O=o.orders||[];
+    orders()
+  }
+}
+
+function fill(){
+  let s=D.settings||{};
+
+  set("brand",s.brand);
+  set("hero",s.hero);
+  set("heroSub",s.heroSubtitle);
+
+  set("dhakaShipping",s.dhakaShipping ?? s.shipping ?? 0);
+  set("outsideDhakaShipping",s.outsideDhakaShipping ?? s.shipping ?? 0);
+
+  set("facebook",s.facebook);
+  set("youtube",s.youtube);
+
+  set("bkash",s.bkashNumber);
+  set("nagad",s.nagadNumber);
+  set("rocket",s.rocketNumber);
+
+  set("warning",s.warning);
+
+  document.getElementById("cod").checked=s.cod!==false;
+  document.getElementById("advance").checked=s.advance!==false
+}
+
+async function saveSettings(){
+
+  let s={
+    brand:v("brand"),
+    hero:v("hero"),
+    heroSubtitle:v("heroSub"),
+
+    dhakaShipping:+v("dhakaShipping")||0,
+    outsideDhakaShipping:+v("outsideDhakaShipping")||0,
+
+    facebook:v("facebook"),
+    youtube:v("youtube"),
+
+    bkashNumber:v("bkash"),
+    nagadNumber:v("nagad"),
+    rocketNumber:v("rocket"),
+
+    warning:v("warning"),
+
+    cod:document.getElementById("cod").checked,
+    advance:document.getElementById("advance").checked
+  };
+
+  let r=await post({
+    action:"saveSettings",
+    token:T,
+    settings:s
+  });
+
+  alert(r?.ok?"Saved":"Failed");
+
+  load()
+}
+
+async function saveProduct(){
+
+  let p={
+    id:v("pid")||"p-"+Date.now(),
+    name:v("name"),
+    category:v("cat"),
+    image:v("image"),
+
+    images:v("images")
+      .split(",")
+      .map(x=>x.trim())
+      .filter(Boolean),
+
+    price:+v("price")||0,
+    oldPrice:+v("oldPrice")||0,
+
+    colors:v("colors")
+      .split(",")
+      .map(x=>x.trim())
+      .filter(Boolean),
+
+    sizes:v("sizes")
+      .split(",")
+      .map(x=>x.trim())
+      .filter(Boolean),
+
+    description:v("desc")
+  };
+
+  let r=await post({
+    action:"saveProduct",
+    token:T,
+    product:p
+  });
+
+  alert(r?.ok?"Product saved":"Failed");
+
+  load()
+}
+
+function list(){
+
+  $("plist").innerHTML=(D.products||[]).map(p=>`
+
+    <div class="card">
+
+      <img src="${p.image||""}">
+
+      <div class="info">
+
+        <h3>${p.name}</h3>
+
+        <b>৳${p.price}</b>
+
+        <p>
+          Color: ${(p.colors||[]).join(", ")||"N/A"}
+          <br>
+          Size: ${(p.sizes||[]).join(", ")||"N/A"}
+        </p>
+
+        <button
+          class="primary full"
+          onclick="edit('${p.id}')"
+        >
+          Edit
+        </button>
+
+        <button
+          class="full"
+          onclick="del('${p.id}')"
+        >
+          Delete
+        </button>
+
+      </div>
+
+    </div>
+
+  `).join("")
+}
+
+function edit(id){
+
+  let p=D.products.find(x=>x.id==id);
+
+  if(!p)return;
+
+  set("pid",p.id);
+  set("name",p.name);
+  set("cat",p.category);
+  set("image",p.image);
+  set("images",(p.images||[]).join(","));
+  set("price",p.price);
+  set("oldPrice",p.oldPrice);
+  set("colors",(p.colors||[]).join(","));
+  set("sizes",(p.sizes||[]).join(","));
+  set("desc",p.description);
+
+  scrollTo(0,0)
+}
+
+async function del(id){
+
+  if(confirm("Delete product?")){
+
+    await post({
+      action:"deleteProduct",
+      token:T,
+      id
+    });
+
+    load()
+  }
+}
+
+function orders(){
+
+  $("orders").innerHTML=O.map(o=>`
+
+    <div class="box">
+
+      <b>${o.id}</b>
+
+      <p>
+        ${o.name} | ${o.phone}
+        <br>
+        ${o.address}
+      </p>
+
+      <b>${o.productName}</b>
+
+      <p>
+        Color: ${o.color||"N/A"}
+        |
+        Size: ${o.size||"N/A"}
+        |
+        Qty: ${o.qty}
+
+        <br>
+
+        Total: ৳${o.total}
+
+        <br>
+
+        Payment: ${o.payment}
+      </p>
+
+      <select onchange="status('${o.id}',this.value)">
+
+        ${
+          [
+            "Pending",
+            "Confirmed",
+            "Processing",
+            "Shipped",
+            "Delivered",
+            "Cancelled",
+            "Returned"
+          ]
+          .map(s=>`
+            <option ${s==o.status?"selected":""}>
+              ${s}
+            </option>
+          `)
+          .join("")
+        }
+
+      </select>
+
+      <button
+        class="primary full"
+        onclick="printOrder('${o.id}')"
+      >
+        🖨️ Print Delivery Form
+      </button>
+
+    </div>
+
+  `).join("")||"<p>No orders.</p>"
+}
+
+async function status(id,s){
+
+  await post({
+    action:"updateOrder",
+    token:T,
+    id,
+    status:s
+  });
+
+  load()
+}
+
+function printOrder(id){
+
+  let o=O.find(x=>x.id==id);
+
+  let w=open("","_blank");
+
+  w.document.write(`
+
+    <h1>Arif Fashion House</h1>
+
+    <h3>Customer Delivery Form</h3>
+
+    <hr>
+
+    Order: ${o.id}
+    <br>
+
+    Customer: ${o.name}
+    <br>
+
+    Mobile: ${o.phone}
+    <br>
+
+    Address: ${o.address}
+
+    <hr>
+
+    Product: ${o.productName}
+    <br>
+
+    Color: ${o.color||"N/A"}
+    <br>
+
+    Size: ${o.size||"N/A"}
+    <br>
+
+    Qty: ${o.qty}
+    <br>
+
+    Product Total: ৳${o.productTotal}
+    <br>
+
+    Delivery: ৳${o.shipping}
+    <br>
+
+    <b>Total: ৳${o.total}</b>
+
+    <script>
+      print()
+    <\/script>
+
+  `);
+
+  w.document.close()
+}
+
+function $(x){
+  return document.getElementById(x)
+}
+
+function set(x,v){
+  $(x).value=v??""
+}
+
+function v(x){
+  return $(x).value.trim()
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  if(T&&API){
+    show();
+    load()
+  }
+});
