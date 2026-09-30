@@ -1,22 +1,1098 @@
-const API=(window.AFH_CONFIG||{}).API_URL||"";let D={settings:{},products:[]},P=null,C="",S="",Q=1;
-const defaults={settings:{brand:"Arif Fashion House",hero:"Style • Quality • Reliable Service",heroSubtitle:"Trendy fashion with home delivery.",shipping:80,cod:true,advance:true,bkashNumber:"",nagadNumber:"",rocketNumber:"",facebook:"",youtube:"",warning:"আপনার অর্ডারটি নিশ্চিত করার আগে অনুগ্রহ করে পণ্য, সাইজ/কালার, ঠিকানা ও মোবাইল নম্বর ভালোভাবে যাচাই করুন।"},products:[{id:"demo",name:"Premium T-Shirt",category:"men",image:"",price:850,oldPrice:1000,colors:["Black","White"],sizes:["M","L","XL"],description:"Premium quality fashion product."}]};
-const $=id=>document.getElementById(id),esc=v=>String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"),num=v=>Number(v||0).toLocaleString("en-US");
-async function apiGet(a){if(!API)return null;try{return await (await fetch(API+"?action="+a)).json()}catch(e){return null}}
-async function apiPost(o){if(!API)return null;try{return await (await fetch(API,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(o)})).json()}catch(e){return null}}
-function norm(p){p=p||{};return {...p,id:String(p.id||p.productId||Date.now()),name:p.name||"Product",category:p.category||p.cat||"men",image:p.image||"",images:Array.isArray(p.images)?p.images:[],price:Number(p.price||0),oldPrice:Number(p.oldPrice||0),colors:Array.isArray(p.colors)?p.colors:[],sizes:Array.isArray(p.sizes)?p.sizes:[],description:p.description||""}}
-async function boot(){try{D=JSON.parse(localStorage.getItem("afh_data")||"null")||defaults}catch(e){D=defaults}D.products=(D.products||[]).map(norm);let r=await apiGet("store");if(r?.ok)D=r.data;localStorage.setItem("afh_data",JSON.stringify(D));apply();render("all")}
-function apply(){let s=D.settings||{};$("brandName").textContent=s.brand;$("footerBrand").textContent=s.brand;$("heroTitle").textContent=s.hero;$("heroSubtitle").textContent=s.heroSubtitle;$("warning").textContent=s.warning||defaults.settings.warning;if(s.facebook)$("facebookLink").href=s.facebook;else $("facebookLink").style.display="none";if(s.youtube)$("youtubeLink").href=s.youtube;else $("youtubeLink").style.display="none"}
-function render(cat){let ps=D.products.filter(p=>cat=="all"||p.category==cat);$("products").innerHTML=ps.length?ps.map(p=>{let dis=p.oldPrice>p.price?Math.round((1-p.price/p.oldPrice)*100):0;return `<article class="card"><img src="${esc(p.image)}" onerror="this.style.display='none'"><div class="info"><h3>${esc(p.name)}</h3><span class="price">৳${num(p.price)}</span>${p.oldPrice>p.price?` <del class="old">৳${num(p.oldPrice)}</del> <span class="discount">-${dis}%</span>`:""}<button class="primary full" onclick="openProduct('${esc(p.id)}')">View & Order</button></div></article>`}).join(""):'<p>No products found.</p>'}
-document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{document.querySelectorAll(".chip").forEach(x=>x.classList.remove("active"));b.classList.add("active");render(b.dataset.cat)});
-function openProduct(id){P=D.products.find(x=>x.id==id);C="";S="";Q=1;$("detailCategory").textContent=P.category.toUpperCase();$("detailName").textContent=P.name;$("detailPrice").textContent="৳"+num(P.price);$("detailOld").textContent=P.oldPrice>P.price?"৳"+num(P.oldPrice):"";$("detailDiscount").textContent=P.oldPrice>P.price?"-"+Math.round((1-P.price/P.oldPrice)*100)+"%":"";$("detailDescription").textContent=P.description||"";$("detailImage").src=P.image||"";$("qty").textContent=1;$("colors").innerHTML=(P.colors||[]).map(x=>`<button class="choice" onclick="selColor('${esc(x)}',this)">${esc(x)}</button>`).join("");$("sizes").innerHTML=(P.sizes||[]).map(x=>`<button class="choice" onclick="selSize('${esc(x)}',this)">${esc(x)}</button>`).join("");$("colorWrap").style.display=P.colors?.length?"block":"none";$("sizeWrap").style.display=P.sizes?.length?"block":"none";$("productModal").classList.remove("hidden");totalProduct()}
-function selColor(x,e){C=x;document.querySelectorAll("#colors .choice").forEach(a=>a.classList.remove("selected"));e.classList.add("selected")}
-function selSize(x,e){S=x;document.querySelectorAll("#sizes .choice").forEach(a=>a.classList.remove("selected"));e.classList.add("selected")}
-function changeQty(n){Q=Math.max(1,Math.min(20,Q+n));$("qty").textContent=Q;totalProduct()}
-function totalProduct(){$("productTotal").textContent="৳"+num((P?.price||0)*Q)}
-function closeProduct(){$("productModal").classList.add("hidden")}
-function goCheckout(){if(P.colors?.length&&!C)return alert("Please select a color.");if(P.sizes?.length&&!S)return alert("Please select a size.");closeProduct();$("checkoutImage").src=P.image||"";$("checkoutName").textContent=P.name;$("variantSummary").textContent=[C&&"Color: "+C,S&&"Size: "+S,"Qty: "+Q].filter(Boolean).join(" • ");$("shipping").textContent="৳"+num(D.settings.shipping);$("warning").textContent=D.settings.warning||defaults.settings.warning;$("paymentNumbers").innerHTML=[["bKash",D.settings.bkashNumber],["Nagad",D.settings.nagadNumber],["Rocket",D.settings.rocketNumber]].filter(x=>x[1]).map(x=>`<div><b>${x[0]}:</b> ${esc(x[1])}</div>`).join("");document.querySelector('input[value="COD"]').parentElement.style.display=D.settings.cod===false?"none":"block";document.querySelector('input[value="Advance"]').parentElement.style.display=D.settings.advance===false?"none":"block";$("checkoutModal").classList.remove("hidden");updateTotal()}
-function updateTotal(){$("total").textContent="৳"+num(P.price*Q+Number(D.settings.shipping||0))}
-function toggleConfirm(){$("confirmOrder").disabled=!$("confirmCheck").checked}
-async function submitOrder(){let name=$("customerName").value.trim(),phone=$("customerPhone").value.trim(),address=$("customerAddress").value.trim();if(!name||!phone||!address)return alert("Please fill customer information.");let o={id:"AFH-"+Date.now(),date:new Date().toISOString(),name,phone,address,productId:P.id,productName:P.name,qty:Q,color:C,size:S,price:P.price,productTotal:P.price*Q,shipping:Number(D.settings.shipping||0),total:P.price*Q+Number(D.settings.shipping||0),payment:document.querySelector('input[name="payment"]:checked')?.value||"COD",transactionId:$("transactionId").value.trim(),status:"Pending",source:"Facebook / Website"};let a=JSON.parse(localStorage.getItem("afh_orders")||"[]");a.push(o);localStorage.setItem("afh_orders",JSON.stringify(a));let r=await apiPost({action:"createOrder",order:o});$("orderMsg").textContent=r?.ok?"✅ Order placed successfully. Order ID: "+o.id:"✅ Order saved. Order ID: "+o.id;$("confirmOrder").disabled=true}
-function closeCheckout(){$("checkoutModal").classList.add("hidden")}
-document.addEventListener("DOMContentLoaded",boot);
+const API = (window.AFH_CONFIG || {}).API_URL || "";
+
+let D = {};
+let P = null;
+let Q = 1;
+let selectedColor = "";
+let selectedSize = "";
+let T = sessionStorage.getItem("afh_token") || "";
+
+
+/* =========================
+   BASIC HELPERS
+========================= */
+
+function $(id){
+  return document.getElementById(id);
+}
+
+function num(v){
+  return Number(v || 0).toLocaleString("en-US");
+}
+
+function set(id,value){
+  if($(id)) $(id).value = value ?? "";
+}
+
+function v(id){
+  return $(id) ? $(id).value.trim() : "";
+}
+
+
+/* =========================
+   API
+========================= */
+
+async function get(action){
+  try{
+    const r = await fetch(
+      API + "?action=" + encodeURIComponent(action)
+    );
+    return await r.json();
+  }catch(e){
+    console.error(e);
+    return null;
+  }
+}
+
+async function post(data){
+  try{
+    const r = await fetch(API,{
+      method:"POST",
+      headers:{
+        "Content-Type":"text/plain"
+      },
+      body:JSON.stringify(data)
+    });
+
+    return await r.json();
+
+  }catch(e){
+    console.error(e);
+    return null;
+  }
+}
+
+
+/* =========================
+   LOAD STORE
+========================= */
+
+async function loadStore(){
+
+  if(!API){
+    console.warn("API URL missing");
+    return;
+  }
+
+  const r = await get("store");
+
+  if(!r || !r.ok){
+    console.warn("Store data failed");
+    return;
+  }
+
+  D = r.data || {};
+
+  applySettings();
+
+  renderProducts("all");
+}
+
+
+/* =========================
+   SETTINGS
+========================= */
+
+function applySettings(){
+
+  const s = D.settings || {};
+
+  if($("brandName"))
+    $("brandName").textContent =
+      s.brand || "Arif Fashion House";
+
+  if($("footerBrand"))
+    $("footerBrand").textContent =
+      s.brand || "Arif Fashion House";
+
+  if($("heroTitle"))
+    $("heroTitle").textContent =
+      s.hero || "Style • Quality • Reliable Service";
+
+  if($("heroSubtitle"))
+    $("heroSubtitle").textContent =
+      s.heroSubtitle || "Trendy fashion with home delivery.";
+
+  if($("facebookLink")){
+    $("facebookLink").href =
+      s.facebook || "#";
+  }
+
+  if($("youtubeLink")){
+    $("youtubeLink").href =
+      s.youtube || "#";
+  }
+
+  if($("warning")){
+    $("warning").textContent =
+      s.warning ||
+      "আপনার অর্ডারটি নিশ্চিত করার আগে অনুগ্রহ করে পণ্য, সাইজ/কালার, ঠিকানা ও মোবাইল নম্বর ভালোভাবে যাচাই করুন।";
+  }
+
+  updatePaymentOptions();
+}
+
+
+/* =========================
+   PRODUCTS
+========================= */
+
+function renderProducts(category){
+
+  const box = $("products");
+
+  if(!box) return;
+
+  const products = D.products || [];
+
+  const list =
+    category === "all"
+      ? products
+      : products.filter(
+          p => String(p.category).toLowerCase() === category
+        );
+
+  if(!list.length){
+    box.innerHTML =
+      "<p>এই category-তে কোনো product নেই।</p>";
+    return;
+  }
+
+  box.innerHTML = list.map(p => {
+
+    const discount =
+      p.oldPrice > p.price
+        ? Math.round(
+            ((p.oldPrice - p.price) / p.oldPrice) * 100
+          )
+        : 0;
+
+    return `
+      <div class="card">
+
+        <img
+          src="${p.image || ""}"
+          alt="${p.name || "Product"}"
+          onclick="openProduct('${p.id}')"
+        >
+
+        <div class="info">
+
+          <small>
+            ${p.category || ""}
+          </small>
+
+          <h3>${p.name || ""}</h3>
+
+          <div class="price-line">
+
+            <b>৳${num(p.price)}</b>
+
+            ${
+              p.oldPrice > p.price
+              ? `<del>৳${num(p.oldPrice)}</del>`
+              : ""
+            }
+
+            ${
+              discount
+              ? `<i>${discount}% OFF</i>`
+              : ""
+            }
+
+          </div>
+
+          <button
+            class="primary full"
+            onclick="openProduct('${p.id}')"
+          >
+            View & Order
+          </button>
+
+        </div>
+
+      </div>
+    `;
+
+  }).join("");
+}
+
+
+/* =========================
+   CATEGORY FILTER
+========================= */
+
+document.addEventListener("click",function(e){
+
+  const btn = e.target.closest(".chip");
+
+  if(!btn) return;
+
+  document
+    .querySelectorAll(".chip")
+    .forEach(x => x.classList.remove("active"));
+
+  btn.classList.add("active");
+
+  renderProducts(
+    btn.dataset.cat || "all"
+  );
+
+});
+
+
+/* =========================
+   OPEN PRODUCT
+========================= */
+
+function openProduct(id){
+
+  P = (D.products || []).find(
+    p => String(p.id) === String(id)
+  );
+
+  if(!P) return;
+
+  Q = 1;
+
+  selectedColor = "";
+  selectedSize = "";
+
+  if($("detailImage"))
+    $("detailImage").src = P.image || "";
+
+  if($("detailCategory"))
+    $("detailCategory").textContent =
+      P.category || "";
+
+  if($("detailName"))
+    $("detailName").textContent =
+      P.name || "";
+
+  if($("detailDescription"))
+    $("detailDescription").textContent =
+      P.description || "";
+
+  if($("detailPrice"))
+    $("detailPrice").textContent =
+      "৳" + num(P.price);
+
+  if($("detailOld")){
+
+    if(P.oldPrice && P.oldPrice > P.price){
+      $("detailOld").textContent =
+        "৳" + num(P.oldPrice);
+      $("detailOld").style.display = "";
+    }else{
+      $("detailOld").textContent = "";
+      $("detailOld").style.display = "none";
+    }
+
+  }
+
+  if($("detailDiscount")){
+
+    if(P.oldPrice && P.oldPrice > P.price){
+
+      const d = Math.round(
+        ((P.oldPrice - P.price) / P.oldPrice) * 100
+      );
+
+      $("detailDiscount").textContent =
+        d + "% OFF";
+
+      $("detailDiscount").style.display = "";
+
+    }else{
+
+      $("detailDiscount").textContent = "";
+      $("detailDiscount").style.display = "none";
+
+    }
+
+  }
+
+
+  /* =========================
+     COLOR
+  ========================= */
+
+  const colors =
+    Array.isArray(P.colors)
+      ? P.colors.filter(x => String(x).trim())
+      : [];
+
+  if($("colorWrap")){
+
+    $("colorWrap").style.display =
+      colors.length ? "" : "none";
+  }
+
+  if($("colors")){
+
+    $("colors").innerHTML =
+      colors.map(c => `
+        <button
+          type="button"
+          class="choice"
+          onclick="selectColor('${escapeAttr(c)}',this)"
+        >
+          ${escapeHTML(c)}
+        </button>
+      `).join("");
+  }
+
+
+  /* =========================
+     SIZE
+  ========================= */
+
+  const sizes =
+    Array.isArray(P.sizes)
+      ? P.sizes.filter(x => String(x).trim())
+      : [];
+
+  if($("sizeWrap")){
+
+    $("sizeWrap").style.display =
+      sizes.length ? "" : "none";
+  }
+
+  if($("sizes")){
+
+    $("sizes").innerHTML =
+      sizes.map(s => `
+        <button
+          type="button"
+          class="choice"
+          onclick="selectSize('${escapeAttr(s)}',this)"
+        >
+          ${escapeHTML(s)}
+        </button>
+      `).join("");
+  }
+
+
+  /* =========================
+     THUMBNAILS
+  ========================= */
+
+  const imgs = [];
+
+  if(P.image)
+    imgs.push(P.image);
+
+  if(Array.isArray(P.images)){
+    P.images.forEach(x => {
+      if(x && !imgs.includes(x))
+        imgs.push(x);
+    });
+  }
+
+  if($("thumbs")){
+
+    $("thumbs").innerHTML =
+      imgs.map(img => `
+        <img
+          src="${img}"
+          onclick="changeDetailImage('${escapeAttr(img)}')"
+        >
+      `).join("");
+  }
+
+
+  if($("qty"))
+    $("qty").textContent = Q;
+
+  updateProductTotal();
+
+  if($("productModal"))
+    $("productModal").classList.remove("hidden");
+}
+
+
+/* =========================
+   COLOR SELECT
+========================= */
+
+function selectColor(color,el){
+
+  selectedColor = color;
+
+  document
+    .querySelectorAll("#colors .choice")
+    .forEach(x => x.classList.remove("active"));
+
+  if(el)
+    el.classList.add("active");
+}
+
+
+/* =========================
+   SIZE SELECT
+========================= */
+
+function selectSize(size,el){
+
+  selectedSize = size;
+
+  document
+    .querySelectorAll("#sizes .choice")
+    .forEach(x => x.classList.remove("active"));
+
+  if(el)
+    el.classList.add("active");
+}
+
+
+/* =========================
+   QUANTITY
+========================= */
+
+function changeQty(change){
+
+  Q += Number(change || 0);
+
+  if(Q < 1)
+    Q = 1;
+
+  if(Q > 99)
+    Q = 99;
+
+  if($("qty"))
+    $("qty").textContent = Q;
+
+  updateProductTotal();
+
+  if(
+    $("checkoutModal") &&
+    !$("checkoutModal").classList.contains("hidden")
+  ){
+    updateTotal();
+  }
+}
+
+
+/* =========================
+   PRODUCT TOTAL
+========================= */
+
+function updateProductTotal(){
+
+  if(!P) return;
+
+  const total =
+    Number(P.price || 0) * Q;
+
+  if($("productTotal"))
+    $("productTotal").textContent =
+      "৳" + num(total);
+}
+
+
+/* =========================
+   CLOSE PRODUCT
+========================= */
+
+function closeProduct(){
+
+  if($("productModal"))
+    $("productModal").classList.add("hidden");
+}
+
+
+/* =========================
+   DETAIL IMAGE
+========================= */
+
+function changeDetailImage(src){
+
+  if($("detailImage"))
+    $("detailImage").src = src;
+}
+
+
+/* =========================
+   DELIVERY CHARGE
+========================= */
+
+function getShipping(){
+
+  const s = D.settings || {};
+
+  const area =
+    $("deliveryArea")
+      ? $("deliveryArea").value
+      : "dhaka";
+
+  if(area === "outside"){
+
+    return Number(
+      s.outsideDhakaShipping ??
+      s.shipping ??
+      0
+    );
+
+  }
+
+  return Number(
+    s.dhakaShipping ??
+    s.shipping ??
+    0
+  );
+}
+
+
+/* =========================
+   CHECKOUT
+========================= */
+
+function goCheckout(){
+
+  if(!P) return;
+
+
+  /* COLOR VALIDATION */
+
+  const colors =
+    Array.isArray(P.colors)
+      ? P.colors.filter(x => String(x).trim())
+      : [];
+
+  if(colors.length && !selectedColor){
+
+    alert("Please select color.");
+
+    return;
+  }
+
+
+  /* SIZE VALIDATION */
+
+  const sizes =
+    Array.isArray(P.sizes)
+      ? P.sizes.filter(x => String(x).trim())
+      : [];
+
+  if(sizes.length && !selectedSize){
+
+    alert("Please select size.");
+
+    return;
+  }
+
+
+  if($("checkoutImage"))
+    $("checkoutImage").src =
+      P.image || "";
+
+  if($("checkoutName"))
+    $("checkoutName").textContent =
+      P.name || "";
+
+
+  updateVariantSummary();
+
+
+  /* Default delivery area */
+
+  if($("deliveryArea"))
+    $("deliveryArea").value = "dhaka";
+
+
+  /* Reset confirmation */
+
+  if($("confirmCheck"))
+    $("confirmCheck").checked = false;
+
+  if($("confirmOrder"))
+    $("confirmOrder").disabled = true;
+
+
+  /* Clear order message */
+
+  if($("orderMsg"))
+    $("orderMsg").textContent = "";
+
+
+  updateTotal();
+
+  updatePaymentOptions();
+
+
+  if($("checkoutModal"))
+    $("checkoutModal").classList.remove("hidden");
+}
+
+
+/* =========================
+   VARIANT SUMMARY
+========================= */
+
+function updateVariantSummary(){
+
+  if(!$("variantSummary"))
+    return;
+
+  const parts = [];
+
+  if(selectedColor)
+    parts.push("Color: " + selectedColor);
+
+  if(selectedSize)
+    parts.push("Size: " + selectedSize);
+
+  parts.push("Qty: " + Q);
+
+  $("variantSummary").textContent =
+    parts.join(" | ");
+}
+
+
+/* =========================
+   CHECKOUT TOTAL
+========================= */
+
+function updateTotal(){
+
+  if(!P) return;
+
+  const shipping =
+    getShipping();
+
+  const productTotal =
+    Number(P.price || 0) * Q;
+
+  const total =
+    productTotal + shipping;
+
+
+  if($("shipping"))
+    $("shipping").textContent =
+      "৳" + num(shipping);
+
+  if($("total"))
+    $("total").textContent =
+      "৳" + num(total);
+
+  updateVariantSummary();
+}
+
+
+/* =========================
+   PAYMENT OPTIONS
+========================= */
+
+function updatePaymentOptions(){
+
+  const s = D.settings || {};
+
+  const codRadio =
+    document.querySelector(
+      'input[name="payment"][value="COD"]'
+    );
+
+  const advanceRadio =
+    document.querySelector(
+      'input[name="payment"][value="Advance"]'
+    );
+
+  if(codRadio)
+    codRadio.parentElement.style.display =
+      s.cod === false ? "none" : "";
+
+  if(advanceRadio)
+    advanceRadio.parentElement.style.display =
+      s.advance === false ? "none" : "";
+
+
+  if(
+    s.cod === false &&
+    s.advance !== false &&
+    advanceRadio
+  ){
+    advanceRadio.checked = true;
+  }
+
+
+  if(
+    s.advance === false &&
+    s.cod !== false &&
+    codRadio
+  ){
+    codRadio.checked = true;
+  }
+
+
+  updatePaymentNumbers();
+}
+
+
+/* =========================
+   PAYMENT NUMBER DISPLAY
+========================= */
+
+function updatePaymentNumbers(){
+
+  const box = $("paymentNumbers");
+
+  if(!box) return;
+
+  const s = D.settings || {};
+
+  const selected =
+    document.querySelector(
+      'input[name="payment"]:checked'
+    );
+
+  if(!selected){
+
+    box.innerHTML = "";
+
+    if($("transactionId"))
+      $("transactionId").classList.add("hidden");
+
+    return;
+  }
+
+
+  if(selected.value === "Advance"){
+
+    const nums = [];
+
+    if(s.bkashNumber)
+      nums.push(
+        "bKash: " +
+        escapeHTML(String(s.bkashNumber))
+      );
+
+    if(s.nagadNumber)
+      nums.push(
+        "Nagad: " +
+        escapeHTML(String(s.nagadNumber))
+      );
+
+    if(s.rocketNumber)
+      nums.push(
+        "Rocket: " +
+        escapeHTML(String(s.rocketNumber))
+      );
+
+
+    box.innerHTML =
+      nums.length
+        ? `<p>${nums.join("<br>")}</p>`
+        : "<p>Advance payment number not set.</p>";
+
+
+    if($("transactionId"))
+      $("transactionId").classList.remove("hidden");
+
+  }else{
+
+    box.innerHTML = "";
+
+    if($("transactionId")){
+
+      $("transactionId").value = "";
+
+      $("transactionId").classList.add("hidden");
+
+    }
+
+  }
+}
+
+
+/* =========================
+   PAYMENT RADIO CHANGE
+========================= */
+
+document.addEventListener(
+  "change",
+  function(e){
+
+    if(
+      e.target &&
+      e.target.name === "payment"
+    ){
+
+      updatePaymentNumbers();
+
+    }
+
+  }
+);
+
+
+/* =========================
+   CONFIRM CHECKBOX
+========================= */
+
+function toggleConfirm(){
+
+  const checked =
+    $("confirmCheck")
+      ? $("confirmCheck").checked
+      : false;
+
+  if($("confirmOrder"))
+    $("confirmOrder").disabled =
+      !checked;
+}
+
+
+/* =========================
+   SUBMIT ORDER
+========================= */
+
+async function submitOrder(){
+
+  if(!P) return;
+
+
+  const name =
+    v("customerName");
+
+  const phone =
+    v("customerPhone");
+
+  const address =
+    v("customerAddress");
+
+
+  if(!name){
+
+    alert("Please enter customer name.");
+    return;
+  }
+
+  if(!phone){
+
+    alert("Please enter mobile number.");
+    return;
+  }
+
+  if(!address){
+
+    alert("Please enter delivery address.");
+    return;
+  }
+
+
+  if(
+    $("confirmCheck") &&
+    !$("confirmCheck").checked
+  ){
+
+    alert("Please confirm the order information.");
+    return;
+  }
+
+
+  const paymentEl =
+    document.querySelector(
+      'input[name="payment"]:checked'
+    );
+
+  const payment =
+    paymentEl
+      ? paymentEl.value
+      : "COD";
+
+
+  const transactionId =
+    v("transactionId");
+
+
+  if(
+    payment === "Advance" &&
+    !transactionId
+  ){
+
+    alert("Please enter Transaction ID.");
+    return;
+  }
+
+
+  const area =
+    $("deliveryArea")
+      ? $("deliveryArea").value
+      : "dhaka";
+
+
+  const shipping =
+    getShipping();
+
+
+  const productTotal =
+    Number(P.price || 0) * Q;
+
+
+  const total =
+    productTotal + shipping;
+
+
+  const order = {
+
+    id:
+      "AFH-" +
+      Date.now(),
+
+    name,
+
+    phone,
+
+    address,
+
+    productId:
+      P.id,
+
+    productName:
+      P.name,
+
+    qty:
+      Q,
+
+    color:
+      selectedColor,
+
+    size:
+      selectedSize,
+
+    price:
+      Number(P.price || 0),
+
+    productTotal,
+
+    deliveryArea:
+      area,
+
+    shipping,
+
+    total,
+
+    payment,
+
+    transactionId,
+
+    status:
+      "Pending",
+
+    source:
+      "Website"
+
+  };
+
+
+  if($("confirmOrder"))
+    $("confirmOrder").disabled = true;
+
+  if($("orderMsg"))
+    $("orderMsg").textContent =
+      "অর্ডার পাঠানো হচ্ছে...";
+
+
+  const r =
+    await post({
+      action:"createOrder",
+      order
+    });
+
+
+  if(r && r.ok){
+
+    if($("orderMsg"))
+      $("orderMsg").textContent =
+        "✅ আপনার অর্ডার সফলভাবে গ্রহণ করা হয়েছে।";
+
+    alert(
+      "অর্ডার সফলভাবে গ্রহণ করা হয়েছে।"
+    );
+
+
+    setTimeout(() => {
+
+      closeCheckout();
+
+      if($("customerName"))
+        $("customerName").value = "";
+
+      if($("customerPhone"))
+        $("customerPhone").value = "";
+
+      if($("customerAddress"))
+        $("customerAddress").value = "";
+
+      if($("transactionId"))
+        $("transactionId").value = "";
+
+      if($("confirmCheck"))
+        $("confirmCheck").checked = false;
+
+      if($("confirmOrder"))
+        $("confirmOrder").disabled = true;
+
+    },800);
+
+
+  }else{
+
+    if($("orderMsg"))
+      $("orderMsg").textContent =
+        "❌ অর্ডার পাঠানো যায়নি। আবার চেষ্টা করুন।";
+
+    if($("confirmOrder"))
+      $("confirmOrder").disabled = false;
+
+  }
+}
+
+
+/* =========================
+   CLOSE CHECKOUT
+========================= */
+
+function closeCheckout(){
+
+  if($("checkoutModal"))
+    $("checkoutModal").classList.add("hidden");
+}
+
+
+/* =========================
+   ESCAPE HTML
+========================= */
+
+function escapeHTML(value){
+
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+function escapeAttr(value){
+
+  return String(value ?? "")
+    .replace(/\\/g,"\\\\")
+    .replace(/'/g,"\\'");
+}
+
+
+/* =========================
+   START
+========================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function(){
+
+    loadStore();
+
+  }
+);
